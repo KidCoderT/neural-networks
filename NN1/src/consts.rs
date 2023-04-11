@@ -1,4 +1,4 @@
-use macroquad::{prelude::*};
+use macroquad::prelude::*;
 
 pub const NO_H_TILES: usize = 14;
 pub const NO_V_TILES: usize = 8;

@@ -26,7 +26,11 @@ fn classify(x: f32, y: f32, weights: [[f32; 2]; 2], biases: [f32; 2]) -> u8 {
     // 0 is blue
     // 1 is red
 
-    if is_okay > not_okay { 0 } else { 1 }
+    if is_okay > not_okay {
+        0
+    } else {
+        1
+    }
 }
 
 #[macroquad::main(window_conf)]
@@ -71,11 +75,10 @@ async fn main() {
             // println!("pixel x: {}, graph x: {}", x + OFFSET as i16, x);
 
             for y in (0i16..HEIGHT as i16).rev() {
-
                 // println!("pixel y: {}, graph y: {}", y);
                 let prediction = classify(
-                    x as f32,
-                    HEIGHT as f32 - y as f32 - OFFSET as f32,
+                    x as f32 / WIDTH as f32,
+                    (HEIGHT as f32 - y as f32 - OFFSET as f32) / HEIGHT as f32,
                     weights,
                     biases,
                 );
@@ -85,9 +88,7 @@ async fn main() {
                     red_tint
                 };
                 texture.set_pixel((x + OFFSET as i16) as u32, y as u32, color);
-
             }
-
         }
 
         draw_texture(Texture2D::from_image(&texture), 0.0, 0.0, WHITE);

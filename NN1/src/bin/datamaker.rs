@@ -1,4 +1,4 @@
-use macroquad::{prelude::*};
+use macroquad::prelude::*;
 
 extern crate nn1;
 use nn1::consts::*;
