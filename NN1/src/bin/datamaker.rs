@@ -1,4 +1,4 @@
-use macroquad::{prelude::*, window};
+use macroquad::{prelude::*};
 
 extern crate nn1;
 use nn1::consts::*;
@@ -8,8 +8,8 @@ fn window_conf() -> Conf {
         window_title: "Data Gen".to_owned(),
         window_resizable: false,
         fullscreen: false,
-        window_width: ((horizontal_tiles + 1) * tile_size) as i32,
-        window_height: ((vertical_tiles + 1) * tile_size) as i32,
+        window_width: ((NO_H_TILES + 1) * TILE_SIZE) as i32,
+        window_height: ((NO_V_TILES + 1) * TILE_SIZE) as i32,
         ..Default::default()
     }
 }
@@ -46,36 +46,36 @@ async fn main() {
             };
         }
 
-        for idx in 0..=horizontal_tiles {
-            let x = (idx * tile_size + offset) as f32;
+        for idx in 0..=NO_H_TILES {
+            let x = (idx * TILE_SIZE + OFFSET) as f32;
             let line_color = if idx == 0 { highlighted } else { graph_lines };
-            draw_line(x, 0., x, height as f32, 2., line_color)
+            draw_line(x, 0., x, HEIGHT as f32, 2., line_color)
         }
 
-        for idx in 0..=vertical_tiles {
-            let y = (idx * tile_size + offset) as f32;
-            let line_color = if idx == vertical_tiles {
+        for idx in 0..=NO_V_TILES {
+            let y = (idx * TILE_SIZE + OFFSET) as f32;
+            let line_color = if idx == NO_V_TILES {
                 highlighted
             } else {
                 graph_lines
             };
-            draw_line(0., y as f32, width as f32, y as f32, 2., line_color)
+            draw_line(0., y, WIDTH as f32, y, 2., line_color)
         }
 
         for (idx, (dotx, doty)) in blues.clone().iter().enumerate() {
-            let x = *dotx * tile_size as f32 + offset as f32;
-            let y = *doty * tile_size as f32 + offset as f32;
+            let x = *dotx * TILE_SIZE as f32 + OFFSET as f32;
+            let y = *doty * TILE_SIZE as f32 + OFFSET as f32;
 
-            draw_circle(x, y, circle_radius, blue_color);
+            draw_circle(x, y, DOT_R, blue_color);
 
             draw_text(format!("{}", &idx).as_str(), x, y, 22., WHITE);
         }
 
         for (idx, (dotx, doty)) in reds.clone().iter().enumerate() {
-            let x = *dotx * tile_size as f32 + offset as f32;
-            let y = *doty * tile_size as f32 + offset as f32;
+            let x = *dotx * TILE_SIZE as f32 + OFFSET as f32;
+            let y = *doty * TILE_SIZE as f32 + OFFSET as f32;
 
-            draw_circle(x, y, circle_radius, red_color);
+            draw_circle(x, y, DOT_R, red_color);
 
             draw_text(format!("{}", &idx).as_str(), x, y, 22., WHITE);
         }
@@ -84,8 +84,8 @@ async fn main() {
             let (x, y) = {
                 let positions = mouse_position();
                 (
-                    (positions.0 - offset as f32) / tile_size as f32,
-                    (positions.1 - offset as f32) / tile_size as f32,
+                    (positions.0 - OFFSET as f32) / TILE_SIZE as f32,
+                    (positions.1 - OFFSET as f32) / TILE_SIZE as f32,
                 )
             };
             let vector = ((x * 100.0).round() / 100.0, (y * 100.0).round() / 100.0);

@@ -13,8 +13,8 @@ fn window_conf() -> Conf {
         window_title: "Neural Network - 1".to_owned(),
         window_resizable: false,
         fullscreen: false,
-        window_width: width as i32,
-        window_height: height as i32,
+        window_width: WIDTH as i32,
+        window_height: HEIGHT as i32,
         ..Default::default()
     }
 }
@@ -26,7 +26,7 @@ fn classify(x: f32, y: f32, weights: [[f32; 2]; 2], biases: [f32; 2]) -> u8 {
     // 0 is blue
     // 1 is red
 
-    return if (is_okay > not_okay) { 0 } else { 1 };
+    if is_okay > not_okay { 0 } else { 1 }
 }
 
 #[macroquad::main(window_conf)]
@@ -42,7 +42,7 @@ async fn main() {
     let blue_color = Color::from_rgba(92, 177, 254, 255);
     let blue_tint = Color::from_rgba(92, 177, 254, 100);
 
-    let mut texture = Image::gen_image_color(width as u16, height as u16, red_tint);
+    let mut texture = Image::gen_image_color(WIDTH as u16, HEIGHT as u16, red_tint);
 
     loop {
         clear_background(background);
@@ -51,31 +51,31 @@ async fn main() {
             break;
         }
 
-        for idx in 0..=horizontal_tiles {
-            let x = (idx * tile_size + offset) as f32;
-            let line_color = if (idx == 0) { highlighted } else { graph_lines };
-            draw_line(x, 0., x, height as f32, 2., line_color)
+        for idx in 0..=NO_H_TILES {
+            let x = (idx * TILE_SIZE + OFFSET) as f32;
+            let line_color = if idx == 0 { highlighted } else { graph_lines };
+            draw_line(x, 0., x, HEIGHT as f32, 2., line_color)
         }
 
-        for idx in 0..=vertical_tiles {
-            let y = (idx * tile_size + offset) as f32;
-            let line_color = if (idx == vertical_tiles) {
+        for idx in 0..=NO_V_TILES {
+            let y = (idx * TILE_SIZE + OFFSET) as f32;
+            let line_color = if idx == NO_V_TILES {
                 highlighted
             } else {
                 graph_lines
             };
-            draw_line(0., y as f32, width as f32, y as f32, 2., line_color)
+            draw_line(0., y, WIDTH as f32, y, 2., line_color)
         }
 
-        for x in -(offset as i16)..(width - offset) as i16 {
-            // println!("pixel x: {}, graph x: {}", x + offset as i16, x);
+        for x in -(OFFSET as i16)..(WIDTH - OFFSET) as i16 {
+            // println!("pixel x: {}, graph x: {}", x + OFFSET as i16, x);
 
-            for y in (0i16..height as i16).rev() {
+            for y in (0i16..HEIGHT as i16).rev() {
 
                 // println!("pixel y: {}, graph y: {}", y);
                 let prediction = classify(
                     x as f32,
-                    height as f32 - y as f32 - offset as f32,
+                    HEIGHT as f32 - y as f32 - OFFSET as f32,
                     weights,
                     biases,
                 );
@@ -84,7 +84,7 @@ async fn main() {
                 } else {
                     red_tint
                 };
-                texture.set_pixel((x + offset as i16) as u32, y as u32, color);
+                texture.set_pixel((x + OFFSET as i16) as u32, y as u32, color);
 
             }
 
@@ -94,23 +94,23 @@ async fn main() {
 
         for (dotx, doty) in &data::BLUES {
             draw_circle(
-                *dotx * tile_size as f32 + offset as f32,
-                *doty * tile_size as f32 + offset as f32,
-                circle_radius,
+                *dotx * TILE_SIZE as f32 + OFFSET as f32,
+                *doty * TILE_SIZE as f32 + OFFSET as f32,
+                DOT_R,
                 blue_color,
             )
         }
 
         for (dotx, doty) in &data::REDS {
             draw_circle(
-                *dotx * tile_size as f32 + offset as f32,
-                *doty * tile_size as f32 + offset as f32,
-                circle_radius,
+                *dotx * TILE_SIZE as f32 + OFFSET as f32,
+                *doty * TILE_SIZE as f32 + OFFSET as f32,
+                DOT_R,
                 red_color,
             )
         }
 
-        widgets::Window::new(hash!(), vec2(width as f32 - 350., 50.), vec2(300., 150.)).ui(
+        widgets::Window::new(hash!(), vec2(WIDTH as f32 - 350., 50.), vec2(300., 150.)).ui(
             &mut *root_ui(),
             |ui| {
                 ui.separator();
