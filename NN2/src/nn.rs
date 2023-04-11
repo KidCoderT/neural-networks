@@ -82,6 +82,63 @@ impl NeuralNetwork {
     }
 }
 
+pub mod benchmark {
+    use super::NeuralNetwork;
+    use crate::consts::*;
+
+    fn old_nn(x: f32, y: f32, weights: [[f32; 2]; 2], biases: [f32; 2]) -> u8 {
+        let is_okay = x * weights[0][0] + y * weights[1][0] + biases[0];
+        let not_okay = x * weights[0][1] + y * weights[1][1] + biases[1];
+        if is_okay > not_okay {
+            0
+        } else {
+            1
+        }
+    }
+
+    pub fn test_old(weights: [[f32; 2]; 2], biases: [f32; 2]) {
+        for x in -(OFFSET as i16)..(WIDTH - OFFSET) as i16 {
+            for y in (0i16..HEIGHT as i16).rev() {
+                old_nn(
+                    x as f32 / WIDTH as f32,
+                    (HEIGHT as f32 - y as f32 - OFFSET as f32) / HEIGHT as f32,
+                    weights,
+                    biases,
+                );
+            }
+        }
+    }
+
+    pub fn emtpy_new_nn() {
+        let network = NeuralNetwork::new_network(&[2, 2]);
+
+        for x in -(OFFSET as i16)..(WIDTH - OFFSET) as i16 {
+            for y in (0i16..HEIGHT as i16).rev() {
+                network.predict(vec![
+                    x as f32 / WIDTH as f32,
+                    (HEIGHT as f32 - y as f32 - OFFSET as f32) / HEIGHT as f32,
+                ]) as u8;
+            }
+        }
+    }
+
+    pub fn train_new_nn(weights: [[f32; 2]; 2], biases: [f32; 2]) {
+        let mut network = NeuralNetwork::new_network(&[2, 2]);
+
+        network.layers[0].weights = weights.map(|v| v.to_vec()).to_vec();
+        network.layers[0].biases = biases.to_vec();
+
+        for x in -(OFFSET as i16)..(WIDTH - OFFSET) as i16 {
+            for y in (0i16..HEIGHT as i16).rev() {
+                network.predict(vec![
+                    x as f32 / WIDTH as f32,
+                    (HEIGHT as f32 - y as f32 - OFFSET as f32) / HEIGHT as f32,
+                ]) as u8;
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::Layer;

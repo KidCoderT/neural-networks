@@ -144,6 +144,10 @@ async fn main() {
             },
         );
 
+        println!("weights: {:?}", weights);
+        println!("biases: {:?}", biases);
+        println!("");
+
         next_frame().await;
     }
 }
