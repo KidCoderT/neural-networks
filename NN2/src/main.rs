@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use macroquad::prelude::*;
 
 use macroquad::ui::{
@@ -7,6 +9,7 @@ use macroquad::ui::{
 
 use nn2::consts::*;
 use nn2::data;
+use nn2::nn::NeuralNetwork;
 
 fn window_conf() -> Conf {
     Conf {
@@ -19,25 +22,8 @@ fn window_conf() -> Conf {
     }
 }
 
-fn classify(x: f32, y: f32, weights: [[f32; 2]; 2], biases: [f32; 2]) -> u8 {
-    let is_okay = x * weights[0][0] + y * weights[1][0] + biases[0];
-    let not_okay = x * weights[0][1] + y * weights[1][1] + biases[1];
-
-    // 0 is blue
-    // 1 is red
-
-    if is_okay > not_okay {
-        0
-    } else {
-        1
-    }
-}
-
 #[macroquad::main(window_conf)]
 async fn main() {
-    let mut weights: [[f32; 2]; 2] = [[0f32, 0f32], [0f32, 0f32]];
-    let mut biases: [f32; 2] = [0f32, 0f32];
-
     let background = Color::from_rgba(24, 23, 24, 255);
     let graph_lines = Color::from_rgba(39, 38, 39, 255);
     let highlighted = Color::from_rgba(88, 86, 88, 255);
@@ -47,6 +33,23 @@ async fn main() {
     let blue_tint = Color::from_rgba(92, 177, 254, 100);
 
     let mut texture = Image::gen_image_color(WIDTH as u16, HEIGHT as u16, red_tint);
+    let mut network = NeuralNetwork::new_network(&[2, 3, 2]);
+
+    let time = Instant::now();
+    for x in -(OFFSET as i16)..(WIDTH - OFFSET) as i16 {
+        // println!("pixel x: {}, graph x: {}", x + OFFSET as i16, x);
+        for y in (0i16..HEIGHT as i16).rev() {
+            // println!("pixel y: {}, graph y: {}", y);
+            let prediction = network.predict(vec![
+                x as f32 / WIDTH as f32,
+                (HEIGHT as f32 - y as f32 - OFFSET as f32) / HEIGHT as f32,
+            ]);
+            let color = if prediction == 0 { blue_tint } else { red_tint };
+            texture.set_pixel((x + OFFSET as i16) as u32, y as u32, color);
+        }
+    }
+    let duration = time.elapsed();
+    println!("duration for command: {:?}", duration);
 
     loop {
         clear_background(background);
@@ -69,26 +72,6 @@ async fn main() {
                 graph_lines
             };
             draw_line(0., y, WIDTH as f32, y, 2., line_color)
-        }
-
-        for x in -(OFFSET as i16)..(WIDTH - OFFSET) as i16 {
-            // println!("pixel x: {}, graph x: {}", x + OFFSET as i16, x);
-
-            for y in (0i16..HEIGHT as i16).rev() {
-                // println!("pixel y: {}, graph y: {}", y);
-                let prediction = classify(
-                    x as f32 / WIDTH as f32,
-                    (HEIGHT as f32 - y as f32 - OFFSET as f32) / HEIGHT as f32,
-                    weights,
-                    biases,
-                );
-                let color = if prediction == 0u8 {
-                    blue_tint
-                } else {
-                    red_tint
-                };
-                texture.set_pixel((x + OFFSET as i16) as u32, y as u32, color);
-            }
         }
 
         draw_texture(Texture2D::from_image(&texture), 0.0, 0.0, WHITE);
@@ -116,31 +99,31 @@ async fn main() {
             |ui| {
                 ui.separator();
 
-                ui.tree_node(hash!(), "weights", |ui| {
-                    for layer_idx in 0..(weights.len()) {
-                        for node_idx in 0..(weights[layer_idx].len()) {
+                for (idx, layer) in network.layers.iter_mut().enumerate() {
+                    ui.tree_node(hash!(idx, &layer.name), &layer.name, |ui| {
+                        for node_idx in 0..(layer.outputs) {
+                            ui.label(None, format!("node: {}", node_idx).as_str());
+
+                            for input_node in (0..layer.inputs) {
+                                ui.slider(
+                                    hash!((input_node, node_idx, &layer.name)),
+                                    format!("[w({},{})]", input_node, node_idx).as_str(),
+                                    -1f32..1f32,
+                                    &mut layer.weights[input_node][node_idx],
+                                );
+                            }
+
                             ui.slider(
-                                hash!((layer_idx, node_idx)),
-                                format!("[w({},{})]", layer_idx, node_idx).as_str(),
+                                hash!((node_idx, &layer.name)),
+                                format!("[b({})]", node_idx).as_str(),
                                 -1f32..1f32,
-                                &mut weights[layer_idx][node_idx],
+                                &mut layer.biases[node_idx],
                             );
                         }
-                    }
-                });
+                    });
+                }
 
                 ui.separator();
-
-                ui.tree_node(hash!(), "biases", |ui| {
-                    for node_bias_idx in 0..(biases.len()) {
-                        ui.slider(
-                            hash!((node_bias_idx,)),
-                            format!("[b({})]", node_bias_idx).as_str(),
-                            -1f32..1f32,
-                            &mut biases[node_bias_idx],
-                        );
-                    }
-                });
             },
         );
 
