@@ -25,7 +25,12 @@ impl Layer {
         }
     }
 
-    pub fn update_node(&mut self, node_idx: usize, new_weights: Option<Vec<f32>>, new_bias: Option<f32>) {
+    pub fn update_node(
+        &mut self,
+        node_idx: usize,
+        new_weights: Option<Vec<f32>>,
+        new_bias: Option<f32>,
+    ) {
         if let Some(weights) = new_weights {
             assert_eq!(weights.len(), self.weights[node_idx].len());
             self.weights[node_idx] = weights;
@@ -37,7 +42,10 @@ impl Layer {
     }
 
     pub fn node(&self, node_idx: usize) -> (Vec<f32>, f32) {
-        (self.weights[node_idx].to_owned(), self.biases[node_idx].to_owned())
+        (
+            self.weights[node_idx].to_owned(),
+            self.biases[node_idx].to_owned(),
+        )
     }
 
     pub fn output(&self, inputs: Vec<f32>) -> Vec<f32> {
@@ -78,7 +86,6 @@ impl NeuralNetwork {
         }
     }
 
-    // fixme
     pub fn output(&self, inputs: Vec<f32>) -> Vec<f32> {
         assert_eq!(inputs.len(), self.inputs);
         let mut input: Vec<f32> = inputs;
@@ -141,8 +148,9 @@ pub mod benchmark {
     pub fn train_new_nn(weights: [[f32; 2]; 2], biases: [f32; 2]) {
         let mut network = NeuralNetwork::new_network(&[2, 2]);
 
-        network.layers[0].weights = weights.map(|v| v.to_vec()).to_vec();
-        network.layers[0].biases = biases.to_vec();
+        for (idx, layer) in network.layers.iter_mut().enumerate() {
+            layer.update_node(idx, Some(weights[idx].to_vec()), Some(biases[idx]))
+        }
 
         for x in -(OFFSET as i16)..(WIDTH - OFFSET) as i16 {
             for y in (0i16..HEIGHT as i16).rev() {
@@ -153,13 +161,34 @@ pub mod benchmark {
             }
         }
     }
+
+    pub fn nn_output() {
+        let network = NeuralNetwork::new_network(&[2, 2]);
+
+        for x in -(OFFSET as i16)..(WIDTH - OFFSET) as i16 {
+            for y in (0i16..HEIGHT as i16).rev() {
+                let _layer_output: u8 = {
+                    let outputs = network.output(vec![
+                        x as f32 / WIDTH as f32,
+                        (HEIGHT as f32 - y as f32 - OFFSET as f32) / HEIGHT as f32,
+                    ]);
+
+                    if outputs[0] > outputs[1] {
+                        0
+                    } else {
+                        1
+                    }
+                };
+            }
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::consts::OFFSET;
 
-    use super::benchmark::{old_nn, test_old};
+    use super::benchmark::old_nn;
     use super::Layer;
     use super::NeuralNetwork;
     use crate::consts::*;
@@ -223,7 +252,6 @@ mod tests {
             } else {
                 1
             }
-
         };
         assert_eq!(
             old_nn(-0.033333335, 0.83492064, [[0f32; 2]; 2], [0f32; 2]),
@@ -271,11 +299,6 @@ mod tests {
 
         for x in -(OFFSET as i16)..(OFFSET as i16) {
             for y in (0i16..(OFFSET * 2) as i16).rev() {
-                println!(
-                    "{:?}, {:?}",
-                    x as f32 / WIDTH as f32,
-                    (HEIGHT as f32 - y as f32 - OFFSET as f32) / HEIGHT as f32
-                );
                 assert_eq!(
                     old_nn(
                         x as f32 / WIDTH as f32,
@@ -292,5 +315,56 @@ mod tests {
         }
 
         // todo: check with trained network
+        network.layers[0].update_node(0, Some(vec![0.31386864, 0.5474453]), Some(-0.44525546));
+        network.layers[0].update_node(1, Some(vec![-0.6496351, -0.021897793]), None);
+
+        for x in -(OFFSET as i16)..(OFFSET as i16) {
+            for y in (0i16..(OFFSET * 2) as i16).rev() {
+                assert_eq!(
+                    old_nn(
+                        x as f32 / WIDTH as f32,
+                        (HEIGHT as f32 - y as f32 - OFFSET as f32) / HEIGHT as f32,
+                        [[0.31386864, -0.6496351], [0.5474453, -0.021897793]],
+                        [-0.44525546, 0.0],
+                    ),
+                    network.predict(vec![
+                        x as f32 / WIDTH as f32,
+                        (HEIGHT as f32 - y as f32 - OFFSET as f32) / HEIGHT as f32
+                    ]) as u8
+                )
+            }
+        }
+    }
+
+    #[test]
+    fn test_nn_output_fn() {
+        let mut network = NeuralNetwork::new_network(&[2, 2]);
+
+        for x in -(OFFSET as i16)..(OFFSET as i16) {
+            for y in (0i16..(OFFSET * 2) as i16).rev() {
+                let layer_output: u8 = {
+                    let outputs = network.output(vec![
+                        x as f32 / WIDTH as f32,
+                        (HEIGHT as f32 - y as f32 - OFFSET as f32) / HEIGHT as f32,
+                    ]);
+
+                    if outputs[0] > outputs[1] {
+                        0
+                    } else {
+                        1
+                    }
+                };
+
+                assert_eq!(
+                    old_nn(
+                        x as f32 / WIDTH as f32,
+                        (HEIGHT as f32 - y as f32 - OFFSET as f32) / HEIGHT as f32,
+                        [[0f32; 2]; 2],
+                        [0f32; 2]
+                    ),
+                    layer_output
+                )
+            }
+        }
     }
 }
