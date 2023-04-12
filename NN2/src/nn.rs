@@ -25,10 +25,24 @@ impl Layer {
         }
     }
 
+    pub fn update_node(&mut self, node_idx: usize, new_weights: Option<Vec<f32>>, new_bias: Option<f32>) {
+        if let Some(weights) = new_weights {
+            assert_eq!(weights.len(), self.weights[node_idx].len());
+            self.weights[node_idx] = weights;
+        }
+
+        if let Some(biase) = new_bias {
+            self.biases[node_idx] = biase
+        }
+    }
+
+    pub fn node(&self, node_idx: usize) -> (Vec<f32>, f32) {
+        (self.weights[node_idx].to_owned(), self.biases[node_idx].to_owned())
+    }
+
     pub fn output(&self, inputs: Vec<f32>) -> Vec<f32> {
         let mut weighted_output = vec![0f32; self.outputs];
 
-        // todo: improve this
         for node_idx in 0..self.outputs {
             weighted_output[node_idx] += (0..self.inputs)
                 .fold(self.biases[node_idx], |acc, input_idx| {
@@ -154,20 +168,9 @@ mod tests {
     fn test_layer_basic() {
         let mut layer = Layer::new(2, 3, 1, true);
 
-        // setting the biases
-        layer.biases[0] = 0.9;
-        layer.biases[1] = 0.2;
-        layer.biases[2] = 0.5;
-
-        // setting the weights
-        layer.weights[0][0] = 1.;
-        layer.weights[0][1] = 1.5;
-
-        layer.weights[1][0] = 3.;
-        layer.weights[1][1] = 0.2;
-
-        layer.weights[2][0] = 2.1;
-        layer.weights[2][1] = 3.;
+        layer.update_node(0, Some(vec![1., 1.5]), Some(0.9));
+        layer.update_node(1, Some(vec![3., 0.2]), Some(0.2));
+        layer.update_node(2, Some(vec![2.1, 3.]), Some(0.5));
 
         let output = layer.output(vec![2., 1.]);
 
@@ -229,12 +232,8 @@ mod tests {
 
         // Now testing trained layer
 
-        layer.weights[0][0] = 0.31386864;
-        layer.weights[0][1] = 0.5474453;
-        layer.weights[1][0] = -0.6496351;
-        layer.weights[1][1] = -0.021897793;
-
-        layer.biases = [-0.44525546, 0.0].to_vec();
+        layer.update_node(0, Some(vec![0.31386864, 0.5474453]), Some(-0.44525546));
+        layer.update_node(1, Some(vec![-0.6496351, -0.021897793]), None);
 
         for x in -(OFFSET as i16)..(OFFSET as i16) {
             for y in (0i16..(OFFSET * 2) as i16).rev() {
