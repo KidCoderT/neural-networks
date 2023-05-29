@@ -1,4 +1,4 @@
-use macroquad::prelude::*;
+use macroquad::{prelude::*, texture::get_screen_data};
 
 use macroquad::ui::{
     hash, root_ui,
@@ -47,6 +47,46 @@ async fn main() {
     let blue_tint = Color::from_rgba(92, 177, 254, 100);
 
     let mut texture = Image::gen_image_color(WIDTH as u16, HEIGHT as u16, red_tint);
+    let mut graph: Option<Image> = None;
+
+    //     clear_background(background);
+
+    //     for idx in 0..=NO_H_TILES {
+    //         let x = (idx * TILE_SIZE + OFFSET) as f32;
+    //         let line_color = if idx == 0 { highlighted } else { graph_lines };
+    //         draw_line(x, 0., x, HEIGHT as f32, 2., line_color)
+    //     }
+
+    //     for idx in 0..=NO_V_TILES {
+    //         let y = (idx * TILE_SIZE + OFFSET) as f32;
+    //         let line_color = if idx == NO_V_TILES {
+    //             highlighted
+    //         } else {
+    //             graph_lines
+    //         };
+    //         draw_line(0., y, WIDTH as f32, y, 2., line_color)
+    //     }
+
+    //     for (dotx, doty) in &data::BLUES {
+    //         draw_circle(
+    //             *dotx * TILE_SIZE as f32 + OFFSET as f32,
+    //             *doty * TILE_SIZE as f32 + OFFSET as f32,
+    //             DOT_R,
+    //             blue_color,
+    //         )
+    //     }
+
+    //     for (dotx, doty) in &data::REDS {
+    //         draw_circle(
+    //             *dotx * TILE_SIZE as f32 + OFFSET as f32,
+    //             *doty * TILE_SIZE as f32 + OFFSET as f32,
+    //             DOT_R,
+    //             red_color,
+    //         )
+    //     }
+
+    //     get_screen_data()
+    // };
 
     loop {
         clear_background(background);
@@ -55,61 +95,74 @@ async fn main() {
             break;
         }
 
-        for idx in 0..=NO_H_TILES {
-            let x = (idx * TILE_SIZE + OFFSET) as f32;
-            let line_color = if idx == 0 { highlighted } else { graph_lines };
-            draw_line(x, 0., x, HEIGHT as f32, 2., line_color)
+        if is_key_down(KeyCode::Space) {
+            println!("weights: {:?}", weights);
+            println!("biases: {:?}", biases);
+            println!("");
         }
-
-        for idx in 0..=NO_V_TILES {
-            let y = (idx * TILE_SIZE + OFFSET) as f32;
-            let line_color = if idx == NO_V_TILES {
-                highlighted
-            } else {
-                graph_lines
-            };
-            draw_line(0., y, WIDTH as f32, y, 2., line_color)
-        }
-
-        for x in -(OFFSET as i16)..(WIDTH - OFFSET) as i16 {
-            // println!("pixel x: {}, graph x: {}", x + OFFSET as i16, x);
-
-            for y in (0i16..HEIGHT as i16).rev() {
-                // println!("pixel y: {}, graph y: {}", y);
-                let prediction = classify(
-                    x as f32 / WIDTH as f32,
-                    (HEIGHT as f32 - y as f32 - OFFSET as f32) / HEIGHT as f32,
-                    weights,
-                    biases,
-                );
-                let color = if prediction == 0u8 {
-                    blue_tint
-                } else {
-                    red_tint
-                };
-                texture.set_pixel((x + OFFSET as i16) as u32, y as u32, color);
+        
+        if let Some(image) = &graph {
+            draw_texture(Texture2D::from_image(image), 0.0, 0.0, WHITE);
+        } else {
+            for idx in 0..=NO_H_TILES {
+                let x = (idx * TILE_SIZE + OFFSET) as f32;
+                let line_color = if idx == 0 { highlighted } else { graph_lines };
+                draw_line(x, 0., x, HEIGHT as f32, 2., line_color)
             }
+    
+            for idx in 0..=NO_V_TILES {
+                let y = (idx * TILE_SIZE + OFFSET) as f32;
+                let line_color = if idx == NO_V_TILES {
+                    highlighted
+                } else {
+                    graph_lines
+                };
+                draw_line(0., y, WIDTH as f32, y, 2., line_color)
+            }
+    
+            for (dotx, doty) in &data::BLUES {
+                draw_circle(
+                    *dotx * TILE_SIZE as f32 + OFFSET as f32,
+                    *doty * TILE_SIZE as f32 + OFFSET as f32,
+                    DOT_R,
+                    blue_color,
+                )
+            }
+    
+            for (dotx, doty) in &data::REDS {
+                draw_circle(
+                    *dotx * TILE_SIZE as f32 + OFFSET as f32,
+                    *doty * TILE_SIZE as f32 + OFFSET as f32,
+                    DOT_R,
+                    red_color,
+                )
+            }
+
+            graph = Some(get_screen_data());
         }
 
-        draw_texture(Texture2D::from_image(&texture), 0.0, 0.0, WHITE);
 
-        for (dotx, doty) in &data::BLUES {
-            draw_circle(
-                *dotx * TILE_SIZE as f32 + OFFSET as f32,
-                *doty * TILE_SIZE as f32 + OFFSET as f32,
-                DOT_R,
-                blue_color,
-            )
-        }
+        // draw_texture(Texture2D::from_image(&texture), 0.0, 0.0, WHITE);
 
-        for (dotx, doty) in &data::REDS {
-            draw_circle(
-                *dotx * TILE_SIZE as f32 + OFFSET as f32,
-                *doty * TILE_SIZE as f32 + OFFSET as f32,
-                DOT_R,
-                red_color,
-            )
-        }
+        // for x in -(OFFSET as i16)..(WIDTH - OFFSET) as i16 {
+        //     // println!("pixel x: {}, graph x: {}", x + OFFSET as i16, x);
+
+        //     for y in (0i16..HEIGHT as i16).rev() {
+        //         // println!("pixel y: {}, graph y: {}", y);
+        //         let prediction = classify(
+        //             x as f32 / WIDTH as f32,
+        //             (HEIGHT as f32 - y as f32 - OFFSET as f32) / HEIGHT as f32,
+        //             weights,
+        //             biases,
+        //         );
+        //         let color = if prediction == 0u8 {
+        //             blue_tint
+        //         } else {
+        //             red_tint
+        //         };
+        //         texture.set_pixel((x + OFFSET as i16) as u32, y as u32, color);
+        //     }
+        // }
 
         widgets::Window::new(hash!(), vec2(WIDTH as f32 - 350., 50.), vec2(300., 150.)).ui(
             &mut *root_ui(),
@@ -143,10 +196,6 @@ async fn main() {
                 });
             },
         );
-
-        println!("weights: {:?}", weights);
-        println!("biases: {:?}", biases);
-        println!("");
 
         next_frame().await;
     }
