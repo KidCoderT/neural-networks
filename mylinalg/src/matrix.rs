@@ -1,3 +1,5 @@
+
+#[derive(Clone)]
 pub struct Matrix {
     pub n_rows: usize,
     pub n_cols: usize,
