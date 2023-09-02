@@ -31,7 +31,16 @@ fn mul_col_benchmark(c: &mut Criterion) {
     c.bench_function("multiply col", |b| b.iter(|| matrix.scale_col(5, 40.0)));
 }
 
-// TODO: BENCHMARK OPS
+
+fn mul_matrix_benchmark(c: &mut Criterion) {
+    let mut matrix = Matrix::new_rnd(1000, 1000, 0.0, 1000.0);
+    c.bench_function("multiply assign matrix", |b| b.iter(|| matrix *= 100.0));
+}
+
+fn mul_assign_matrix_benchmark(c: &mut Criterion) {
+    let matrix = Matrix::new_rnd(1000, 1000, 0.0, 1000.0);
+    c.bench_function("multiply matrix", |b| b.iter(|| matrix.clone() * 100.0));
+}
 
 criterion_group!(
     benches,
@@ -40,6 +49,9 @@ criterion_group!(
     set_all_benchmark,
     set_diagonals_benchmark,
     mul_row_benchmark,
-    mul_col_benchmark
+    mul_col_benchmark,
+    mul_matrix_benchmark,
+    mul_assign_matrix_benchmark
 );
+
 criterion_main!(benches);
