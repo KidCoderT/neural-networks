@@ -1,4 +1,5 @@
 use crate::matrix::Matrix;
+use rayon::prelude::*;
 
 // TODO: ADD RAYON
 
@@ -11,19 +12,19 @@ impl Matrix {
     }
 
     pub fn set_all(&mut self, value: f64) {
-        for element in self.data.iter_mut() {
+        self.data.par_iter_mut().for_each(|element| {
             *element = value;
-        }
+        });
     }
 
     pub fn set_diagonal(&mut self, value: f64) {
         assert!(self.is_square(), "only possible for square matrices");
         let size = self.n_rows;
 
-        for (idx, element) in self.data.iter_mut().enumerate() {
+        self.data.par_iter_mut().enumerate().for_each(|(idx, element)| {
             if idx % (size + 1) == 0 {
                 *element = value;
             }
-        }
+        });
     }
 }
